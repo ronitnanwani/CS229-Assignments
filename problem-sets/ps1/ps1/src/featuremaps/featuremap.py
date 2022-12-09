@@ -7,6 +7,13 @@ np.seterr(all='raise')
 
 factor = 2.0
 
+def makemap(x,k):
+    arr=[]
+    for i in range (k+1):
+        arr.append(pow(x,i))
+    arr=np.array(arr)
+    return arr
+
 class LinearModel(object):
     """Base class for linear models."""
 
@@ -26,6 +33,11 @@ class LinearModel(object):
             y: Training example labels. Shape (n_examples,).
         """
         # *** START CODE HERE ***
+        b=np.matrix.transpose(X)
+        a=np.dot(b,X)
+        b=np.dot(b,y)
+        self.theta=np.linalg.solve(a,b)
+        
         # *** END CODE HERE ***
 
     def create_poly(self, k, X):
@@ -38,6 +50,13 @@ class LinearModel(object):
             X: Training example inputs. Shape (n_examples, 2).
         """
         # *** START CODE HERE ***
+        n=X.shape[0]
+        design_matrix=np.zeros((n,k+1))
+        for i in range(n):
+            design_matrix[i]=makemap(X[i][1],k)
+        
+        return design_matrix
+
         # *** END CODE HERE ***
 
     def create_sin(self, k, X):
@@ -63,21 +82,32 @@ class LinearModel(object):
             Outputs of shape (n_examples,).
         """
         # *** START CODE HERE ***
+        n=X.shape[0]
+        plot_y=[]
+        for i in range (n):
+            plot_y.append(np.inner(self.theta,X[i]))
+        plot_y=np.array(plot_y)
+        return plot_y
         # *** END CODE HERE ***
 
 
-def run_exp(train_path, sine=False, ks=[1, 2, 3, 5, 10, 20], filename='plot.png'):
+def run_exp(train_path, sine=False, ks=[1, 3, 5, 10, 20], filename='plot.png'):
     train_x,train_y=util.load_dataset(train_path,add_intercept=True)
     plot_x = np.ones([1000, 2])
     plot_x[:, 1] = np.linspace(-factor*np.pi, factor*np.pi, 1000)
     plt.figure()
     plt.scatter(train_x[:, 1], train_y)
-
+    plot_y=[]
+    obj=LinearModel()
     for k in ks:
         '''
         Our objective is to train models and perform predictions on plot_x data
         '''
         # *** START CODE HERE ***
+        design_matrix=obj.create_poly(k,train_x)
+        obj.fit(design_matrix,train_y)
+        predict_matrix=obj.create_poly(k,plot_x)
+        plot_y=obj.predict(predict_matrix)
         # *** END CODE HERE ***
         '''
         Here plot_y are the predictions of the linear model on the plot_x data
@@ -95,6 +125,12 @@ def main(train_path, small_path, eval_path):
     Run all expetriments
     '''
     # *** START CODE HERE ***
+
+    #Degree-3 Polynomial Regression
+    run_exp(train_path,ks=[3],filename='degree-3_polynomial_regression.png')
+
+    #Degree-k Polynomial Regression
+    run_exp(train_path,filename='degree-k_polynomial_regression.png')
     # *** END CODE HERE ***
 
 if __name__ == '__main__':
