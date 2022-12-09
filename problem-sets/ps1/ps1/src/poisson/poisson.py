@@ -1,6 +1,11 @@
 import numpy as np
 import util
 import matplotlib.pyplot as plt
+import math
+
+def g(theta,x):
+    p=np.inner(theta,x)
+    return(pow(math.e,p))
 
 def main(lr, train_path, eval_path, save_path):
     """Problem: Poisson regression with gradient ascent.
@@ -17,6 +22,34 @@ def main(lr, train_path, eval_path, save_path):
     # *** START CODE HERE ***
     # Fit a Poisson Regression model
     # Run on the validation set, and use np.savetxt to save outputs to save_path
+
+    clf=PoissonRegression(step_size=lr)
+    clf.fit(x_train,y_train)
+
+    x_eval,y_eval=util.load_dataset(eval_path,add_intercept=True)
+    cnt_eval=clf.predict(x_eval)
+    np.savetxt(save_path,cnt_eval)
+
+    plot_path=save_path.replace('.txt','.png')
+    x_axis=y_eval
+    y_axis=cnt_eval                                        #Prediction (Real value)
+    plt.figure(0)
+    plt.scatter(x_axis,y_axis,alpha=0.75)
+    plt.xlabel("True Count")
+    plt.ylabel("Prediction")
+    plt.savefig(plot_path)
+
+    cnt_pred=np.zeros(x_eval.shape[0])
+    for i in range(x_eval.shape[0]):
+        cnt_pred[i]=math.floor(cnt_eval[i])
+    np.savetxt('count_pred.txt',cnt_pred)
+    x_axis=y_eval
+    y_axis=cnt_pred                                       #Predicted Count (floored value)
+    plt.figure(1)
+    plt.scatter(x_axis,y_axis,alpha=0.75)
+    plt.xlabel("True Count")
+    plt.ylabel("Predicted Count")
+    plt.savefig('count_pred.png')
     # *** END CODE HERE ***
 
 
@@ -53,6 +86,17 @@ class PoissonRegression:
             y: Training example labels. Shape (n_examples,).
         """
         # *** START CODE HERE ***
+        n=x.shape[0]
+        dim=x.shape[1]
+        self.theta=np.zeros(dim)
+        prev_theta=np.ones(dim)
+
+        while(math.sqrt(np.inner(self.theta-prev_theta,self.theta-prev_theta))>=self.eps):
+            prev_theta=self.theta
+            for i in range(n):
+                self.theta=self.theta+self.step_size*(y[i]-g(self.theta,x[i]))*x[i]
+
+        
         # *** END CODE HERE ***
 
     def predict(self, x):
@@ -65,6 +109,12 @@ class PoissonRegression:
             Floating-point prediction for each input, shape (n_examples,).
         """
         # *** START CODE HERE ***
+        n=x.shape[0]
+        cnt_eval=[]
+        for i in range(n):
+            cnt_eval.append(g(self.theta,x[i]))
+        cnt_eval=np.array(cnt_eval)
+        return cnt_eval
         # *** END CODE HERE ***
 
 if __name__ == '__main__':
