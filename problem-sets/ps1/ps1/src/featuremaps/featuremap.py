@@ -1,6 +1,7 @@
 import util
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 np.seterr(all='raise')
 
@@ -68,6 +69,12 @@ class LinearModel(object):
             X: Training example inputs. Shape (n_examples, 2).
         """
         # *** START CODE HERE ***
+        n=X.shape[0]
+        design_matrix=np.zeros((n,k+2))
+        for i in range(n):
+            design_matrix[i:i+1,0:k+1]=makemap(X[i][1],k)
+            design_matrix[i][k+1]=math.sin(X[i][1])
+        return design_matrix
         # *** END CODE HERE ***
 
     def predict(self, X):
@@ -91,7 +98,7 @@ class LinearModel(object):
         # *** END CODE HERE ***
 
 
-def run_exp(train_path, sine=False, ks=[1, 3, 5, 10, 20], filename='plot.png'):
+def run_exp(train_path, sine=False, ks=[1, 2, 3, 5, 10, 20], filename='plot.png'):
     train_x,train_y=util.load_dataset(train_path,add_intercept=True)
     plot_x = np.ones([1000, 2])
     plot_x[:, 1] = np.linspace(-factor*np.pi, factor*np.pi, 1000)
@@ -104,9 +111,18 @@ def run_exp(train_path, sine=False, ks=[1, 3, 5, 10, 20], filename='plot.png'):
         Our objective is to train models and perform predictions on plot_x data
         '''
         # *** START CODE HERE ***
-        design_matrix=obj.create_poly(k,train_x)
+        if sine:
+            design_matrix=obj.create_sin(k,train_x)
+        else:
+            design_matrix=obj.create_poly(k,train_x)
+            
         obj.fit(design_matrix,train_y)
-        predict_matrix=obj.create_poly(k,plot_x)
+
+        if sine:
+            predict_matrix=obj.create_sin(k,plot_x)
+        else:
+            predict_matrix=obj.create_poly(k,plot_x)
+
         plot_y=obj.predict(predict_matrix)
         # *** END CODE HERE ***
         '''
@@ -131,6 +147,16 @@ def main(train_path, small_path, eval_path):
 
     #Degree-k Polynomial Regression
     run_exp(train_path,filename='degree-k_polynomial_regression.png')
+
+    #Other feature maps involving sin term as well
+    run_exp(train_path,sine=True,filename='other_feature_maps')
+
+    #Considering small subset of training set
+    run_exp(small_path,filename='check_overfitting.png')
+
+    #Check overfitting with other features
+    run_exp(small_path,sine=True,filename='check_overfitting_with_other_features.png')
+
     # *** END CODE HERE ***
 
 if __name__ == '__main__':
